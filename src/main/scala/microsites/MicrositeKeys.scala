@@ -23,6 +23,7 @@ import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
 import cats.syntax.either.*
 import com.typesafe.sbt.site.SitePlugin.autoImport.makeSite
 import io.circe._
+import github4s.GithubConfig
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import mdoc.MdocPlugin.autoImport._
