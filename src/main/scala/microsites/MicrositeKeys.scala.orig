@@ -16,14 +16,36 @@
 
 package microsites
 
+<<<<<<< HEAD
 import java.nio.file._
+=======
+import java.nio.file.*
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import com.github.sbt.sbtghpages.GhpagesPlugin.autoImport.*
+import com.typesafe.sbt.site.SitePlugin.autoImport.makeSite
+import github4s.GithubConfig
+import io.circe.*
+import io.circe.generic.semiauto.*
+import io.circe.syntax.*
+import mdoc.MdocPlugin.autoImport.*
+import microsites.github.GitHubOps
+import microsites.ioops.FileWriter.*
+import microsites.ioops.*
+import microsites.ioops.syntax.*
+import microsites.util.MicrositeHelper
+import org.http4s.blaze.client.BlazeClientBuilder
+import sbt.Keys.*
+import sbt.*
+import sbt.complete.DefaultParsers.OptNotSpace
+import sbt.io.IO as FIO
+>>>>>>> f9deb49 (Fix UnauthorizedError on GitHub Enterprise publish)
 
 import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
 import cats.syntax.either.*
 import com.typesafe.sbt.site.SitePlugin.autoImport.makeSite
 import io.circe._
-import github4s.GithubConfig
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import mdoc.MdocPlugin.autoImport._
@@ -497,8 +519,26 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
 
             BlazeClientBuilder[IO](ec).resource
               .use { client =>
-                implicit val config: GithubConfig = buildGithubConfig(micrositeGitHostingUrl.value)(log)
+<<<<<<< HEAD
+                implicit val config: GithubConfig =
+                  buildGithubConfig(micrositeGitHostingUrl.value)(log)
                 val ghOps = new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)
+=======
+
+                implicit val config: GithubConfig = if(micrositeGitHostingUrl.value.nonEmpty) {
+                  val url = new URL(micrositeGitHostingUrl.value)
+                  val replaceHost: String => String = s => s.replace("github.com", url.getHost)
+
+                   GithubConfig.default
+                    .copy(
+                      baseUrl = replaceHost(s"${GithubConfig.default.baseUrl}"),
+                      authorizeUrl = replaceHost(s"${GithubConfig.default.authorizeUrl}"),
+                      accessTokenUrl = replaceHost(s"${GithubConfig.default.accessTokenUrl}")
+                    )
+                } else GithubConfig.default
+
+                val ghOps = new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)(implicitly, implicitly, config)
+>>>>>>> f9deb49 (Fix UnauthorizedError on GitHub Enterprise publish)
 
                 if (noJekyll) FIO.touch(siteDir / ".nojekyll")
 
