@@ -497,8 +497,7 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
 
             BlazeClientBuilder[IO](ec).resource
               .use { client =>
-                implicit val config: GithubConfig =
-                  buildGithubConfig(micrositeGitHostingUrl.value)(log)
+                implicit val config: GithubConfig = buildGithubConfig(micrositeGitHostingUrl.value)(log)
                 val ghOps = new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)
 
                 if (noJekyll) FIO.touch(siteDir / ".nojekyll")
@@ -564,7 +563,7 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
         val replaceHost: String => String = s => s.replace("github.com", url.getHost)
         GithubConfig.default
           .copy(
-            baseUrl = replaceHost(s"${GithubConfig.default.baseUrl}"),
+            baseUrl = s"${url.getProtocol}://${url.getHost}/api/v3",
             authorizeUrl = replaceHost(s"${GithubConfig.default.authorizeUrl}"),
             accessTokenUrl = replaceHost(s"${GithubConfig.default.accessTokenUrl}")
           )
