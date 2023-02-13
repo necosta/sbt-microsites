@@ -20,6 +20,7 @@ import java.nio.file._
 
 import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
+import cats.syntax.either.*
 import com.typesafe.sbt.site.SitePlugin.autoImport.makeSite
 import io.circe._
 import io.circe.generic.semiauto._
@@ -37,6 +38,7 @@ import sbt.complete.DefaultParsers.OptNotSpace
 import sbt.io.{IO => FIO}
 
 import scala.concurrent.ExecutionContext
+import java.net.MalformedURLException
 import scala.sys.process._
 
 trait MicrositeKeys {
@@ -494,8 +496,9 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
 
             BlazeClientBuilder[IO](ec).resource
               .use { client =>
-                val ghOps: GitHubOps[IO] =
-                  new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)
+                implicit val config: GithubConfig =
+                  buildGithubConfig(micrositeGitHostingUrl.value)(log)
+                val ghOps = new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)
 
                 if (noJekyll) FIO.touch(siteDir / ".nojekyll")
 
@@ -552,6 +555,24 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
       val extracted = Project.extract(st)
 
       extracted.runTask(publishMultiversionMicrosite, st)._1
+    }
+
+  protected[this] def buildGithubConfig(hostingUrl: String)(implicit log: Logger): GithubConfig =
+    Either.catchOnly[MalformedURLException](new URL(hostingUrl)) match {
+      case Right(url) if url.getProtocol.startsWith("https") =>
+        val replaceHost: String => String = s => s.replace("github.com", url.getHost)
+        GithubConfig.default
+          .copy(
+            baseUrl = replaceHost(s"${GithubConfig.default.baseUrl}"),
+            authorizeUrl = replaceHost(s"${GithubConfig.default.authorizeUrl}"),
+            accessTokenUrl = replaceHost(s"${GithubConfig.default.accessTokenUrl}")
+          )
+      case Right(url) =>
+        log.warn(s"Invalid protocol: ${url.getProtocol}")
+        GithubConfig.default
+      case Left(ex) =>
+        log.error(ex.getMessage)
+        GithubConfig.default
     }
 
   private[this] def validFile(extension: String)(file: File): Boolean =
