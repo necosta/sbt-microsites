@@ -40,7 +40,7 @@ class GitHubOps[F[_]: ConcurrentEffect: Timer](
     fileReader: FileReader = FileReader
 )(implicit val config: GithubConfig) {
 
-  private val gh: Github[F]                = Github[F](client, accessToken)(implicitly, config)
+  private val gh: Github[F]        = Github[F](client, accessToken)(implicitly, config)
   val headers: Map[String, String] = Map("user-agent" -> "sbt-microsites")
 
   def commitDir(branch: String, message: String, dir: File): F[Ref] =

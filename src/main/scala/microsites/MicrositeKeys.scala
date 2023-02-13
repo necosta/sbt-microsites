@@ -20,7 +20,7 @@ import java.nio.file._
 
 import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
-import cats.syntax.either.*
+import cats.syntax.either._
 import com.typesafe.sbt.site.SitePlugin.autoImport.makeSite
 import io.circe._
 import github4s.GithubConfig
@@ -497,7 +497,8 @@ trait MicrositeAutoImportSettings extends MicrositeKeys {
 
             BlazeClientBuilder[IO](ec).resource
               .use { client =>
-                implicit val config: GithubConfig = buildGithubConfig(micrositeGitHostingUrl.value)(log)
+                implicit val config: GithubConfig =
+                  buildGithubConfig(micrositeGitHostingUrl.value)(log)
                 val ghOps = new GitHubOps[IO](client, githubOwner, githubRepo, githubToken)
 
                 if (noJekyll) FIO.touch(siteDir / ".nojekyll")
